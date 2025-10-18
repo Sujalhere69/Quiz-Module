@@ -116,3 +116,72 @@ A lightweight Data Transfer Object used during registration or login.
 | `QuizResult` | * → 1 | `User`, `Quiz` | ManyToOne |
 
 ---
+
+## Following are the service that interact with entities:
+
+## 1. QuestionService
+
+### Description
+Manages all question-related business logic such as creating, updating, retrieving, and deleting questions.
+
+### Methods
+
+| Method | Purpose |
+|--------|---------|
+| `saveQuestion(Question question)` | Saves a question entity.
+| `findQuestionById(Long id)` | Retrieves a question by ID.
+| `updateQuestion(Long id, Question details)` | Updates an existing question.
+| `deleteQuestion(Long id)` | Deletes a question by ID.
+
+### Responsibilities
+- Validate existence before update or delete.
+- Throw `IllegalArgumentException` if the question doesn't exist.
+- Delegate persistence to `QuestionRepository`.
+
+---
+
+## 2. UserService
+
+### Description
+Responsible for managing users, including registration and retrieval of the logged-in user.
+
+### Methods
+
+| Method | Purpose |
+|--------|---------|
+| `registerNewUser(UserDto userDto)` | Converts `UserDto` to `User`, assigns default role, and saves.
+| `getAuthenticatedUser()` | Fetches the currently logged-in user via Spring Security.
+
+### Responsibilities
+- Manage user creation with default user role.
+- Retrieve authenticated user details handling possible exceptions.
+- Interface with `UserRepository` for persistence.
+
+---
+
+## 4. QuizService
+
+### Description
+Manages quiz and quiz result operations including creation, retrieval, deletion, and evaluation support.
+
+### Methods
+
+| Method                        | Description                                                   |
+|-------------------------------|---------------------------------------------------------------|
+| `saveQuiz(Quiz quiz)`          | Saves or updates a Quiz entity.                                |
+| `getAllQuizzes()`              | Returns a list of all quizzes.                                |
+| `getQuizById(Long id)`         | Retrieves a quiz by its ID; throws if not found.              |
+| `deleteQuiz(Long id)`          | Deletes a quiz entity by ID.                                  |
+| `getCorrectAnswers(Long quizId)`| Returns a map of question IDs to the correct answers for a quiz. |
+| `saveQuizResult(User user, Quiz quiz, int score)` | Saves a user's quiz attempt along with the obtained score.      |
+
+### Responsibilities
+- Save quiz attempt results through `QuizResultRepository`.
+- Validate quiz existence on retrieval.
+
+---
+
+
+
+
+
