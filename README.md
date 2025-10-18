@@ -181,6 +181,28 @@ Manages quiz and quiz result operations including creation, retrieval, deletion,
 
 ---
 
+## Repositories : 
+
+### *UserRepository*
+Data access layer for User entity operations.
+- Extends JpaRepository for CRUD operations
+- Custom query methods for username and email lookups
+
+### *QuizRepository*
+Data access layer for Quiz entity operations.
+- Extends JpaRepository for quiz management
+- Supports quiz retrieval and filtering
+
+### *QuestionRepository*
+Data access layer for Question entity operations.
+- Extends JpaRepository for question management
+- Custom methods for quiz-specific question queries
+
+### *QuizResultRepository*
+Data access layer for QuizResult entity operations.
+- Extends JpaRepository for result storage and retrieval
+- Methods for user performance tracking
+
 
 
 
