@@ -1,205 +1,114 @@
-# Quiz Proctoring System
+# Quiz Management System
 
-This project is a **Quiz Proctoring System** built using **Spring Boot** and **MySQL**. It allows admins to manage quizzes, assign quizzes to candidates, and enables candidates to take quizzes with proctoring features.
+A quiz management system where admins create quizzes and questions, and candidates attempt quizzes and receive scores.
 
----
+## Domain Overview
+Actors: Admin, Candidate
 
-## Entity Model & Relationships
+Core Flows:
+- Admin creates quizzes and adds questions.
+- Candidate fetches randomized questions, submits answers, system computes score and stores attempts.
 
-### 1️⃣ User
-Represents both **Admins** and **Candidates** who interact with the Quiz System.
+## Entities
+### Quiz
+- id: Long — system id
+- title: String
+- description: String
+- questions: List<Question>
 
-**Attributes**
-- `id` — Unique identifier for the user (auto-generated)
-- `username` — User’s display name
-- `email` — Unique email used for login
-- `password` — User password (stored as plain text or encoded)
-- `role` — Defines user type (`ADMIN` / `CANDIDATE`)
+### Question
+- id: Long
+- text: String
+- optionA: String
+- optionB: String
+- optionC: String
+- optionD: String
+- correctOption: String — one of A/B/C/D
+- difficulty: DifficultyLevel
+- quiz: Quiz
 
-**Behavior**
-- **Admin:** Can create quizzes and view results.
-- **Candidate:** Can attempt assigned quizzes and view their scores.
+### Answer
+- id: Long
+- question: Question
+- selectedOption: String — A/B/C/D
 
----
+### CandidateEntity
+- id: Long
+- candidateId: String — external/public id
+- name: String
+- contact: String
 
-### 2️⃣ Quiz
-Represents an individual quiz created by an **Admin**.
+### CandidateQuizAttempt
+- id: Long
+- candidate: CandidateEntity
+- quiz: Quiz
+- answers: List<Answer>
+- score: double
+- submittedAt: Instant
 
-**Attributes**
-- `id` — Unique quiz identifier
-- `title` — Name of the quiz
-- `duration` — Total time to complete (in minutes)
-- `questions` — List of `Question` entities linked via OneToMany
-- `quizResults` — Collection of results submitted for this quiz
+### Role
+- Role enumeration or entity for authorization (admin/candidate)
 
-**Relationships**
-- One Quiz → Many Questions  
-- One Quiz → Many QuizResults
+### DifficultyLevel (enum)
+- EASY
+- MEDIUM
+- HARD
 
-**Purpose**
-- Serves as the central entity connecting `Question`, `QuizResult`, and `QuizSubmission`.
+## DTOs
+### SubmitAnswersRequest
+- candidateId: String
+- answers: List<AnswerDTO>
 
----
-
-### 3️⃣ Question
-Represents a single question belonging to a Quiz.
-
-**Attributes**
-- `id` — Unique question ID
-- `text` — The actual question
-- `optionA`, `optionB`, `optionC` — Multiple choice options
-- `correctAnswer` — One character (‘A’, ‘B’, or ‘C’) representing the correct option
-- `quiz` — `ManyToOne` relationship linking to the parent Quiz
-
-**Relationships**
-- Many Questions → One Quiz
-
-**Purpose**
-- Defines all questions linked to each quiz.
-- Used during quiz creation (by Admin) and quiz-taking (by Candidate).
-
----
-
-### 4️⃣ QuizSubmission
-Used to capture the candidate’s answers when attempting a quiz before evaluation.
-
-**Attributes**
-- `quizId` — ID of the quiz being attempted
-- `answers` — A map of question IDs to selected options (`{QuestionId: 'A'}`)
-
-**Purpose**
-- Acts as a data transfer object (not persisted in DB).
-- Used to submit quiz answers from the frontend → backend.
-
----
-
-### 5️⃣ QuizResult
-Stores the final score for each quiz attempt after evaluation.
-
-**Attributes**
-- `id` — Unique identifier
-- `user` — Candidate who attempted the quiz
-- `quiz` — Quiz attempted
-- `score` — Calculated based on correct answers
-
-**Relationships**
-- Many QuizResults → One User  
-- Many QuizResults → One Quiz
-
-**Purpose**
-- Stores evaluated results for each candidate.
-- Enables both Admin and Candidate to view past performance.
-
----
-
-### 6️⃣ UserDto
-A lightweight Data Transfer Object used during registration or login.
-
-**Attributes**
-- `username`
-- `email`
-- `password`
-
-**Purpose**
-- Used to capture user input during signup/login before creating a `User` entity.
-- Prevents exposure of sensitive fields in APIs.
-
----
-
-## ⚙️ Entity Relationships Overview
-
-| From Entity | Relationship | To Entity | Type |
-|--------------|--------------|------------|------|
-| `User` | 1 → * | `QuizResult` | OneToMany |
-| `Quiz` | 1 → * | `Question` | OneToMany |
-| `Quiz` | 1 → * | `QuizResult` | OneToMany |
-| `Question` | * → 1 | `Quiz` | ManyToOne |
-| `QuizResult` | * → 1 | `User`, `Quiz` | ManyToOne |
-
----
-
-## Services that interact with entities
-
-### 1. QuestionService
-
-**Description**  
-Manages all question-related business logic such as creating, updating, retrieving, and deleting questions.
-
-**Methods**
-
-| Method | Purpose |
-|--------|---------|
-| `saveQuestion(Question question)` | Saves a question entity. |
-| `findQuestionById(Long id)` | Retrieves a question by ID. |
-| `updateQuestion(Long id, Question details)` | Updates an existing question. |
-| `deleteQuestion(Long id)` | Deletes a question by ID. |
-
-**Responsibilities**
-- Validate existence before update or delete.
-- Throw `IllegalArgumentException` if the question doesn't exist.
-- Delegate persistence to `QuestionRepository`.
-
----
-
-### 2. UserService
-
-**Description**  
-Responsible for managing users, including registration and retrieval of the logged-in user.
-
-**Methods**
-
-| Method | Purpose |
-|--------|---------|
-| `registerNewUser(UserDto userDto)` | Converts `UserDto` to `User`, assigns default role, and saves. |
-| `getAuthenticatedUser()` | Fetches the currently logged-in user via Spring Security. |
-
-**Responsibilities**
-- Manage user creation with default user role.
-- Retrieve authenticated user details handling possible exceptions.
-- Interface with `UserRepository` for persistence.
-
----
-
-### 3. QuizService
-
-**Description**  
-Manages quiz and quiz result operations including creation, retrieval, deletion, and evaluation support.
-
-**Methods**
-
-| Method | Description |
-|--------|-------------|
-| `saveQuiz(Quiz quiz)` | Saves or updates a Quiz entity. |
-| `getAllQuizzes()` | Returns a list of all quizzes. |
-| `getQuizById(Long id)` | Retrieves a quiz by its ID; throws if not found. |
-| `deleteQuiz(Long id)` | Deletes a quiz entity by ID. |
-| `getCorrectAnswers(Long quizId)` | Returns a map of question IDs to the correct answers for a quiz. |
-| `saveQuizResult(User user, Quiz quiz, int score)` | Saves a candidate's quiz attempt along with the obtained score. |
-
-**Responsibilities**
-- Save quiz attempt results through `QuizResultRepository`.
-- Validate quiz existence on retrieval.
-
----
+### AnswerDTO
+- questionId: Long
+- selectedOption: String — A/B/C/D
 
 ## Repositories
-
-### UserRepository
-- Data access layer for User entity operations.
-- Extends JpaRepository for CRUD operations.
-- Custom query methods for username and email lookups.
-
 ### QuizRepository
-- Data access layer for Quiz entity operations.
-- Extends JpaRepository for quiz management.
-- Supports quiz retrieval and filtering.
+- CRUD for Quiz
+- Queries: by title, fetch with questions
 
 ### QuestionRepository
-- Data access layer for Question entity operations.
-- Extends JpaRepository for question management.
-- Custom methods for quiz-specific question queries.
+- CRUD for Question
+- Queries: by quizId, by (quizId, difficulty), random selection with limit
 
-### QuizResultRepository
-- Data access layer for QuizResult entity operations.
-- Extends JpaRepository for result storage and retrieval.
+### AnswerRepository
+- CRUD for Answer
+
+### CandidateRepository
+- CRUD for CandidateEntity
+- Query by candidateId
+
+### CandidateQuizAttemptRepository
+- CRUD for CandidateQuizAttempt
+- Query by candidate.candidateId
+- Optional: fetch attempts with answers and quiz
+
+## Services
+### QuizService
+- Quiz createQuiz(Quiz quiz) — basic validations, persist quiz
+- void addQuestionsToQuiz(Long quizId, List<Question> questions) — attach to quiz, validate options/correctness
+- List<Quiz> getAllQuizzes()
+- List<Question> getQuestionsByQuizId(Long quizId)
+- List<Question> getQuestionByDifficulty(Long quizId, String difficulty) — maps to enum
+- List<Question> getRandomQuestions(Long quizId, int limit) — random subset for candidate
+- double calculateScore(Long quizId, List<SubmitAnswersRequest.Answer> answers) — compare to correctOption
+- List<CandidateQuizAttempt> getAttemptsByCandidate(String candidateId)
+
+### CandidateQuizAttemptService
+- CandidateQuizAttempt saveAttempt(Long quizId, String candidateId, double score, List<SubmitAnswersRequest.Answer> answers) — create or fetch candidate, persist attempt and normalized answer rows
+
+## Controllers
+### AdminQuizController (/admin/quiz)
+- POST / — create quiz
+- POST /{quizId}/questions — add questions to quiz
+- GET /quizzes — list quizzes
+- GET /{id}/questions — list questions for quiz
+- GET /{quizId}/questions/difficulty/{difficulty} — filter by difficulty
+
+### CandidateQuizController (/candidate/quiz)
+- GET /{quizId}/questions?limit=10 — randomized questions
+- POST /{quizId}/submit — submit attempt via entity payload (maps to DTO internally)
+- POST /{quizId}/submit-answers — submit via SubmitAnswersRequest
+- GET /attempts?candidateId=... — list attempts for candidate
 - Methods for candidate performance tracking.
