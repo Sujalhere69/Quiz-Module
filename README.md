@@ -112,3 +112,46 @@ Core Flows:
 - POST /{quizId}/submit-answers — submit via SubmitAnswersRequest
 - GET /attempts?candidateId=... — list attempts for candidate
 - Methods for candidate performance tracking.
+- DOMAIN (Job Role)
+    ├── IT
+    ├── HR  
+    └── Cybersecurity
+
+QUIZ (Subject within Domain)
+    IT Domain:
+        ├── Java Quiz
+        ├── OS Quiz
+        ├── DSA Quiz
+        └── React Quiz
+    
+    HR Domain:
+        ├── Recruitment Quiz
+        ├── Labor Law Quiz
+        └── Employee Relations Quiz
+    
+    Cybersecurity Domain:
+        ├── Network Security Quiz
+        ├── Ethical Hacking Quiz
+        └── VAPT Quiz
+
+SECTION (Topics within Quiz)
+    Java Quiz:
+        ├── Pointers
+        ├── DSA
+        ├── Stack
+        ├── Collections
+        └── Multithreading
+    
+    OS Quiz:
+        ├── Paging
+        ├── Scheduling
+        ├── Deadlock
+        └── Memory Management
+
+QUESTIONS (Within Section)
+    Paging Section:
+        ├── Question 1 (Easy)
+        ├── Question 2 (Medium)
+        ├── Question 3 (Medium)
+        └── Question 4 (Hard)
+
